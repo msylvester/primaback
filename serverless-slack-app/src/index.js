@@ -90,7 +90,7 @@ slack.on('/primatwo', (msg, bot) => {
               callback_id: "view_existing_surveys",
               actions: [
                 { type: "button", name: "view", text: "view", value: "view" },
-                { type: "button", name: "distribute", text: "distribute", value: "distribute" }
+                { type: "button", name: "distribute", text: "like", value: "like" }
 
               ]
             }]
@@ -99,26 +99,71 @@ slack.on('/primatwo', (msg, bot) => {
           bot.reply(message)
         }
 
+
+      //lets check to see if the message is longer than one word (i.e. check see if its feedback command)
       var messages = msg.text.split(" ");
 
+      if(messages.length>1) {
+        //if the array holding the user command is longer than one we know it could be a feedback command
 
-      if(messages[0] === 'feedback') {
+        if (messages[0] === 'feedback') {
+            //we know that hte second array element should be a user name
 
-        let message = {
-          // selected button value
-          text: "please type prima followed by your question and I will send it to " + messages[1]
+            //use axios to call the slack api and see if user.list includes messages[1]
+            //create feedvack using endpoint
+          const create_url = "https://dv7tgna6ba.execute-api.us-east-1.amazonaws.com/dev/feedback";
+          const  payload =  {
+              question: "give me feedback",
+              sender: msg.user_name,
+              recpient:messages[1]
+
+            }
+            axios.post(create_url,payload)
+              .then((responseTwo) => {
+
+
+                //send an interactive to the recpieint
+                //  see if they want to view
+                let feedback = {
+                  text: payload.question,
+                  attachments: [{
+                    fallback: 'actions',
+                    callback_id: "feedback_resu",
+                    actions: [
+                      { type: "button", name: "dislike", text: "dislike", value: "dislike" },
+                      { type: "button", name: "like", text: "distribute", value: "distribute" }
+
+                    ]
+                  }]
+                };
+
+
+                //send feedbck recpient
+                //bot.reply(message)
+
+                /*
+                we need to send the interactive message to the user
+
+
+                If as_user is false:
+                Pass a username (@chris) as the value of channel to post to that user's @slackbot channel as the bot.
+                Pass the IM channel's ID (D023BB3L2) as the value of channel to post to that IM channel as the bot. The IM channel's ID can be retrieved through the im.list API method.
+
+                */
+
+              })
+              .catch(function (error) {
+                console.log(error);
+              });
+
+
+            //create new entry for feedback table with user name, sender (msg.user_id), question
+
         }
-        bot.reply(message)
+
+
       }
 
-      if(messages[0] === 'feedback') {
-
-        let message = {
-          // selected button value
-          text: "please type prima followed by your question and I will send it to" + messages[1]
-        }
-        bot.reply(message)
-      }
 
 
       //is it null or no-cache
@@ -166,7 +211,7 @@ slack.on('view_existing_surveys', (msg, bot) => {
         text: "cool, distributing..."
       };
 
-  if  (msg.actions[0].value === 'distribute')  {
+  if  (msg.actions[0].value === 'like')  {
 
     // public reply
     bot.reply(message);
