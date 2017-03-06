@@ -21,7 +21,7 @@ provider:
 
 functions:
   create:
-    handler: feedbacks/create.create
+    handler: feedback/create.create
     events:
       - http:
           path: feedback

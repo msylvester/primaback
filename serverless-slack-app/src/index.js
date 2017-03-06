@@ -27,7 +27,7 @@ slack.on('/primatwo', (msg, bot) => {
 
   var url = 'https://qluq1u89ji.execute-api.us-east-1.amazonaws.com/dev/todos/' + user_id
   axios.get(url)
-    .then( (response) => {
+    .then((response) => {
 
       console.log(response);
 
@@ -70,7 +70,7 @@ slack.on('/primatwo', (msg, bot) => {
         bot.reply(message)
 
         //now i need to check and get the password
-      //  switch(msg.text) {
+      //  switch(msg.text)
         if(msg.text === 'website') {
           let message = {
             // selected button value
@@ -110,59 +110,79 @@ slack.on('/primatwo', (msg, bot) => {
             //we know that hte second array element should be a user name
 
             //use axios to call the slack api and see if user.list includes messages[1]
-            //create feedvack using endpoint
-          const create_url = "https://dv7tgna6ba.execute-api.us-east-1.amazonaws.com/dev/feedback";
-          const  payload =  {
-              question: "give me feedback",
-              sender: msg.user_name,
-              recpient:messages[1]
 
-            }
-            axios.post(create_url,payload)
-              .then((responseTwo) => {
+  const USER_LIST_URL = "https://slack.com/api/users.list?token=xoxp-133076293744-134712482070-145724536818-e022ad6329ac0b118912ca664e207e80";
+  axios.get(USER_LIST_URL)
+    .then((response) => {
+      console.log(response.data)
+      const allUsers = response.data["members"];
+      console.log("allUsers logging: ", allUsers)
+      allUsers.map((user) =>{
+        console.log("user name logging: ", user["name"])
+        if(user["name"] === messages[1]) {
 
+                      //create feedvack using endpoint
+                    const create_url = "https://dv7tgna6ba.execute-api.us-east-1.amazonaws.com/dev/feedback";
+                    const  payload =  {
+                        question: "give me feedback",
+                        sender: msg.user_name,
+                        recipient: messages[1]
 
-                //send an interactive to the recpieint
-                //  see if they want to view
-                let feedback = {
-                  text: payload.question,
-                  attachments: [{
-                    fallback: 'actions',
-                    callback_id: "feedback_resu",
-                    actions: [
-                      { type: "button", name: "dislike", text: "dislike", value: "dislike" },
-                      { type: "button", name: "like", text: "distribute", value: "distribute" }
-
-                    ]
-                  }]
-                };
+                      }
+                      axios.post(create_url,payload)
+                        .then((responseTwo) => {
 
 
-                //send feedbck recpient
-                //bot.reply(message)
+                          //send an interactive to the recpieint
+                          //  see if they want to view
+                          let feedback = {
+                            text: payload.question,
+                            attachments: [{
+                              fallback: 'actions',
+                              callback_id: "feedback_resu",
+                              actions: [
+                                { type: "button", name: "dislike", text: "dislike", value: "dislike" },
+                                { type: "button", name: "like", text: "distribute", value: "distribute" }
 
-                /*
-                we need to send the interactive message to the user
+                              ]
+                            }]
+                          };
 
 
-                If as_user is false:
-                Pass a username (@chris) as the value of channel to post to that user's @slackbot channel as the bot.
-                Pass the IM channel's ID (D023BB3L2) as the value of channel to post to that IM channel as the bot. The IM channel's ID can be retrieved through the im.list API method.
+                          //send feedbck recipient
+                          bot.reply(feedback)
 
-                */
+                          //we need to send the interactive message to the user
 
-              })
-              .catch(function (error) {
-                console.log(error);
-              });
+                          })
+                            .catch(error => console.log(error));
+                    }
+                  })
+                })
+                  .catch(error => console.log(error));
+              }
+
+          else {
+                      //If as_user is false:
+                        //  Pass a username (@chris) as the value of channel to post to that user's @slackbot channel as the bot.
+                          //Pass the IM channel's ID (D023BB3L2) as the value of channel to post to that IM channel as the bot. The IM channel's ID can be retrieved through the im.list API method.
+                          const IM_LIST_URL= "https://slack.com/api/im.list?token=xoxp-133076293744-134712482070-145724536818-e022ad6329ac0b118912ca664e207e80";
+                          axios.get(IM_LIST_URL)
+                            .then((responseThree) => {
+                              responseThree.data.ims.map((im) => {
+                                const im_id = im.id;
+                                const im_user = im.user;
+                              })
+                            })
+                              .catch(error => console.log(error));
+      }
+    }
+  }
 
 
             //create new entry for feedback table with user name, sender (msg.user_id), question
 
-        }
 
-
-      }
 
 
 
@@ -172,9 +192,15 @@ slack.on('/primatwo', (msg, bot) => {
 
 
     })
-    .catch(function (error) {
+    .catch((error) => {
       console.log(error);
     });
+
+
+
+});
+
+
 
 
 
@@ -198,7 +224,6 @@ slack.on('/primatwo', (msg, bot) => {
 
   // ephemeral reply
 //  bot.replyPrivate(msg);
-});
 
 
 // Interactive Message handler
