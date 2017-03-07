@@ -12,6 +12,107 @@ const axios = require('axios');
 // The function that AWS Lambda will call
 exports.handler = slack.handler.bind(slack);
 
+//helper method to find users
+function find_users(messages) {
+
+    const slack_url_users_list = `https://slack.com/api/users.list?token=${slack_token}&pretty=1`
+    const recipient = messages[1]
+
+    axios.get(slack_url_users_list)
+      .then( (response) => {
+
+          console.log('going to see if this user is in the list')
+
+          let all_members = response['members']
+
+          let member_array = all_members.reduce((array_of_non_bot_members, member) => {
+
+                array_of_non_bot_members.push(member['name'])
+
+          }, [])
+
+          if (member_array.findIndex(x=> x===recipient) > 0) {
+              //good they are in the arrray
+              let error_message = {
+                  text: `the user ${recipient} is an active memeber of you team ${member_array}`
+              }
+
+              bot.reply(error_message)
+
+              try {
+                if(messages[0] === 'feedback') {
+
+
+                }
+
+                if(messages[0] === 'schedule') {
+
+
+
+                  //  see if they want to view
+                  let message = {
+                    text: `When would you like to schedule your convo with ${messages[1]}`,
+                    attachments: [{
+                      fallback: 'actions',
+                      callback_id: "schedule_hangout",
+                      actions: [
+                        { type: "button", name: "one", text: "1hr", value: `one ${messages[1]}` },
+                        { type: "button", name: "thirty", text: "30min", value: `thirty ${messages[1]}` },
+                        { type: "button", name: "onehalf", text: "1.5hr", value: `onehalf ${messages[1]}` },
+                        { type: "button", name: "two", text: "2hr", value: `two ${messages[1]}`  }
+
+                      ]
+                    }]
+                  };
+
+                  bot.reply(message)
+
+                  return
+
+                }
+
+              }
+
+              catch (error)  {
+
+                let message = {
+                  // selected button value
+                  text: "Prima could not recognize that command ask her for help to see her resources"
+                }
+
+                bot.reply(message)
+
+                console.log("coulnd find the user or somehtin")
+              }
+
+          }
+
+          else {
+            let error_message = {
+                text: `the user ${recipient} is not an active user in your team`
+            }
+
+            bot.reply(error_message)
+
+
+          }
+        })
+
+      .catch((error)=> {
+
+        let error_message = {
+            text: "there was an errror get the lenght of input"
+        }
+
+        bot.reply(error_message)
+      })
+
+  return
+
+}
+
+
+
 
 // Slash Command handler
 slack.on('/primatwo', (msg, bot) => {
@@ -51,6 +152,11 @@ slack.on('/primatwo', (msg, bot) => {
             };
             bot.reply(message)
 
+
+          //call function which handles all the shit
+
+
+
           })
           .catch(function (error) {
             console.log(error);
@@ -70,109 +176,112 @@ slack.on('/primatwo', (msg, bot) => {
         //now i need to check and get the password
       //  switch(msg.text)
 
-        if(msg.text === 'website') {
-          let message = {
-            // selected button value
-            text: "here is your password " + response.data.password + " it was created at " + response.data.updatedAt + " and your username is " + response.data.email
-          };
-          bot.reply(message)
-        }
-
-        //case user hit quest
-        if(msg.text === 'survey') {
-
-          //  see if they want to view
-          let message = {
-            text: "Would you like to view your Surveys?",
-            attachments: [{
-              fallback: 'actions',
-              callback_id: "view_existing_surveys",
-              actions: [
-                { type: "button", name: "view", text: "view", value: "view" },
-                { type: "button", name: "distribute", text: "distribute", value: "distribute" }
-
-              ]
-            }]
-          };
-
-          bot.reply(message)
-        }
-
-        //case user hit quest
-        if(msg.text === 'help') {
-
-            let msg_help = {
-
-              text:"Thank you for installing Prima.  I can do many awesome things including \n *survey* \n *feedback** \n *schedule* \n *generate website credentials*"
-            }
-
-            bot.reply(msg_help)
-
-        }
+      let messages = ''
+      let length_of_input = -1
+      let user_action = ''
+      let recipient = ''
+      let slack_token = 'xoxp-133076293744-133714462291-150730926532-c7d52efd1a86a02a534de88d461437a0'
 
 
         try {
+          //
+          messages =  msg.text.split(" ");
+          length_of_input = messages.length
 
-          const messages = msg.text.split(" ");
-          const user_acton = messages[1]
+        }
+        catch(error) {
 
-          //get request to slack api to see if user is present
-
-
-
-          if(messages[0] === 'feedback') {
-
-
-            //get request to slack to api to se iff user i present
-
-
-            // let message = {
-            //   // selected button value
-            //   text: "please type prima followed by your question and I will send it to " + messages[1]
-            // }
-            // bot.reply(message)
+          let error_message = {
+              text: "there was an errror get the lenght of input"
           }
 
-          if(messages[0] === 'schedule') {
+          bot.reply(error_message)
+          return
+        }
 
 
+        //check to see lenght
 
-            //  see if they want to view
+        if(length_of_input === 1) {
+
+          if(msg.text === 'website') {
             let message = {
-              text: `When would you like to schedule your convo with ${messages[1]}`,
+              // selected button value
+              text: "here is your password " + response.data.password + " it was created at " + response.data.updatedAt + " and your username is " + response.data.email
+            };
+            bot.reply(message)
+          }
+
+          //case user hit quest
+          else if(msg.text === 'survey') {
+
+              // let t =  {
+              //
+              //   text:"sferf"
+              // }
+              //
+              // bot.reply(t)
+            //  see if they want to view
+            const team_id = msg.team_id
+
+            let message = {
+              text: "Would you like to view your Surveys?",
               attachments: [{
                 fallback: 'actions',
-                callback_id: "schedule_hangout",
+                callback_id: "view_existing_surveys",
                 actions: [
-                  { type: "button", name: "one", text: "1hr", value: `one ${messages[1]}` },
-                  { type: "button", name: "thirty", text: "30min", value: `thirty ${messages[1]}` },
-                  { type: "button", name: "onehalf", text: "1.5hr", value: `onehalf ${messages[1]}` },
-                  { type: "button", name: "two", text: "2hr", value: `two ${messages[1]}`  }
+                  { type: "button", "style": "primary",name: "view", text: "view", value: `view` },
+                  { type: "button", name: "distribute", text: "distribute", value: `distribute` }
 
                 ]
               }]
             };
 
             bot.reply(message)
+          }
 
-            return
+          //case user hit quest
+          else if(msg.text === 'help') {
 
+              let msg_help = {
+
+                text:"Thank you for installing Prima.  I can do many awesome things including \n *survey* \n *feedback* \n *schedule* \n *generate website credentials*"
+              }
+
+              bot.reply(msg_help)
+
+          }
+
+          else {
+            let msg_hey =  {
+
+              text: "doesnt work"
+            }
+            bot.reply(msg_hey)
           }
 
         }
 
-        catch (error)  {
 
-          let message = {
-            // selected button value
-            text: "Prima could not recognize that command ask her for help to see her resources"
-          }
+        else if (length_of_input === 2) {
 
-          bot.reply(message)
+        //verify that second input
 
-          console.log("coulnd find the user or somehtin")
+        find_users(messages)
+
         }
 
+        else {
+          let msg_help = {
+
+            text:"Prima can only understand the following commands"
+          }
+
+          bot.reply(msg_help)
+
+
+        }
+      }
 
     })
     .catch(function (error) {
@@ -244,58 +353,107 @@ slack.on('schedule_hangout', (msg, bot) => {
 // Interactive Message handler
 slack.on('view_existing_surveys', (msg, bot) => {
 
+  // let t =  {
+  //
+  //   text: msg.actions[0].value
+  // }
+  //
+  // bot.reply(t)
+  //
+  // cosole.log(`here in this mother fucker ${msg}`)
+    // var message = {
+    //     // selected button value
+    //     text: "distributed hit this hook"
+    //   };
+    //     bot.reply(message);
+  console.log(msg)
 
-
-    var message = {
-        // selected button value
-        text: "cool, distributing..."
-      };
+  let survey = msg.actions[0].value
+  let splitSurvey = survey.split("-")
+  //let team_id = splitSurvey[1]
+  let team_id = msg['team']['id']
 
   if  (msg.actions[0].value === 'distribute')  {
 
     // public reply
-    bot.reply(message);
+    let a = {text: "goddamnit this sux"}
+    bot.reply(a);
 
   }
 
   if( msg.actions[0].value === 'view') {
     //we want tp get all surveys that belong to your brand
+    // let m =  {
+    //
+    //   text:"bitch i am in the view"
+    // }
+    // bot.reply(m)
+
     const url = 'https://0www3cuk3j.execute-api.us-east-1.amazonaws.com/dev/surveys'
 
 
     axios.get(url)
       .then( (response) => {
+
           console.log("In the url for axiso ser")
+
+          let array_of_surveys = []
+
+          // try {
+          //       team_id= msg.team_id
+          //     }
+          // catch(err){
+          //     console.log(`couldnt print the arrays as necessary `)
+          //       let a = {text: "goddamnit this sux lets gett this error"}
+          //     bot.reply(a)
+          //
+          // }
+
           try {
-                const team_id = msg.team_id
-              }
+            array_of_surveys = response.data
+            console.log(`the array of surveys data is ${response}`)
+            // message.text = array_of_surveys
+            // bot.reply(message);
+          }
+
           catch(err){
+            var message_Two = {
+                // selected button value
+                text: "There were serious problems"
+              };
+              bot.reply(message_Two);
+
               console.log(`couldnt print the arrays as necessary `)
-              message.text = "riun"
-              bot.reply(message)
 
           }
 
-        try {
-          var array_of_surveys = response.data
-          message.text = array_of_surveys
-          bot.reply(message);
+        // let a = {text: "goddamnit this sux"}
+        // bot.reply(a);
+        console.log(`the team id is ${team_id}`)
+        console.log(`array of surveys is ${array_of_surveys}`)
+        console.log(`the filtered value is ${array_of_surveys.filter(survey => survey.team_id === team_id)}`)
+        let new_array_survey = []
+        array_of_surveys.forEach((survey) => {
+                console.log(survey.team_id)
+                if(survey.team_id === team_id) {
+                  new_array_survey.push(survey)
+                }
         }
+      )
+      console.log(`${new_array_survey.length} has a length of `)
 
-        catch(err){
-            console.log(`couldnt print the arrays as necessary `)
+        // if(new_array_survey.length > 0) {
+        //
+        //   const final_array_of_survey = array_of_surveys.filter(survey => survey.team_id === team_id)
+          if (new_array_survey.length === 0) {
+              let message = {
+              text:''}
+              message.text = "you need to create some surveys"
+              bot.reply(message);
+            }
 
-        }
-
-
-
-        if(array_of_surveys.filter(survey => survey.team_id === msg.team_id).length > 0) {
-
-          const final_array_of_survey = array_of_surveys.filter(survey => survey.team_id === msg.team_id)
-
-
-          if (final_array_of_survey.length === 1) {
-            const lclSurvey = final_array_of_survey[0]
+          if (new_array_survey.length === 1) {
+            const lclSurvey = new_array_survey[0]
             const lclSurveyId = lclSurvey.id
             console.log (`${lclSurveyId}`)
             let message = {
@@ -308,17 +466,17 @@ slack.on('view_existing_surveys', (msg, bot) => {
                 ]
               }]
             };
-
+              bot.reply(message)
 
           }
 
-          if (final_array_of_survey.length === 2) {
+          if (new_array_survey.length === 2) {
 
 
-            const lclSurvey = final_array_of_survey[0]
+            const lclSurvey = new_array_survey[0]
             const lclSurveyId = lclSurvey.id
 
-            const lclSurveyTwo = final_array_of_survey[1]
+            const lclSurveyTwo = new_array_survey[1]
             const lclSurveyTwoId = lclSurveyTwo.id
 
             console.log (`${lclSurveyId}`)
@@ -334,21 +492,89 @@ slack.on('view_existing_surveys', (msg, bot) => {
               }]
             };
 
+          }
 
+
+          if (new_array_survey.length === 3) {
+
+
+            const lclSurvey = new_array_survey[0]
+            const lclSurveyId = lclSurvey.id
+
+            const lclSurveyTwo = new_array_survey[1]
+            const lclSurveyTwoId = lclSurveyTwo.id
+
+            console.log (`${lclSurveyId}`)
+            let message = {
+              text: "Which survey would you like to view?",
+              attachments: [{
+                fallback: 'actions',
+                callback_id: "show_the_questions",
+                actions: [
+                  { type: "button", name:  `${lclSurveyId}`, text: `${lclSurveyId}`, value: `${lclSurveyId}` },
+                  { type: "button", name:  `${lclSurveyTwoId}`, text: `${lclSurveyTwoId}`, value: `${lclSurveyTwoId}` },
+                  { type: "button", name:  `${lclSurveyTwoId}`, text: `${lclSurveyTwoId}`, value: `${lclSurveyTwoId}` }
+                ]
+              }]
+            };
+
+          }
+          if (new_array_survey.length === 4) {
+
+
+            const lclSurvey = new_array_survey[0]
+            const lclSurveyId = lclSurvey.id
+
+            const lclSurveyTwo = new_array_survey[1]
+            const lclSurveyTwoId = lclSurveyTwo.id
+
+            console.log (`${lclSurveyId}`)
+            let message = {
+              text: "Which survey would you like to view?",
+              attachments: [{
+                fallback: 'actions',
+                callback_id: "show_the_questions",
+                actions: [
+                  { type: "button", name:  `${lclSurveyId}`, text: `${lclSurveyId}`, value: `${lclSurveyId}` },
+                  { type: "button", name:  `${lclSurveyTwoId}`, text: `${lclSurveyTwoId}`, value: `${lclSurveyTwoId}` },
+                  { type: "button", name:  `${lclSurveyTwoId}`, text: `${lclSurveyTwoId}`, value: `${lclSurveyTwoId}` },
+                  { type: "button", name:  `${lclSurveyTwoId}`, text: `${lclSurveyTwoId}`, value: `${lclSurveyTwoId}` }
+                ]
+              }]
+            };
+
+          }
+
+          if (new_array_survey.length === 5) {
+
+
+            const lclSurvey = new_array_survey[0]
+            const lclSurveyId = lclSurvey.id
+
+            const lclSurveyTwo = new_array_survey[1]
+            const lclSurveyTwoId = lclSurveyTwo.id
+
+            console.log (`${lclSurveyId}`)
+            let message = {
+              text: "Which survey would you like to view?",
+              attachments: [{
+                fallback: 'actions',
+                callback_id: "show_the_questions",
+                actions: [
+                  { type: "button", name:  `${lclSurveyId}`, text: `${lclSurveyId}`, value: `${lclSurveyId}` },
+                  { type: "button", name:  `${lclSurveyTwoId}`, text: `${lclSurveyTwoId}`, value: `${lclSurveyTwoId}` },
+                  { type: "button", name:  `${lclSurveyTwoId}`, text: `${lclSurveyTwoId}`, value: `${lclSurveyTwoId}` },
+                  { type: "button", name:  `${lclSurveyTwoId}`, text: `${lclSurveyTwoId}`, value: `${lclSurveyTwoId}` },
+                  { type: "button", name:  `${lclSurveyTwoId}`, text: `${lclSurveyTwoId}`, value: `${lclSurveyTwoId}` }
+                ]
+              }]
+            };
 
           }
 
 
 
 
-
-
-        }
-
-        else {
-          message.text = "you need to create some surveys"
-          bot.reply(message);
-        }
 
 
 
@@ -369,26 +595,27 @@ slack.on('view_existing_surveys', (msg, bot) => {
 slack.on('show_the_questions', (msg, bot) => {
 
     //basically what we want to do is get the survey
-    const survey =  msg.actions[0].value
+    let survey =  msg.actions[0].value
 
     //get url endpoint
-    const url = 'https://0www3cuk3j.execute-api.us-east-1.amazonaws.com/dev/surveys'+survey
+    let url = 'https://0www3cuk3j.execute-api.us-east-1.amazonaws.com/dev/surveys/'+survey
 
     //get request to get the survey
     axios.get(url)
       .then((response) => {
           try {
                 const questions = response.data.questions
-
+                var strBuilder = ''
                 questions.forEach((question) => {
 
-                    var mans = {
-                      text:question
-                    }
-                    bot.reply(mans)
-                  }
+                  strBuilder = strBuilder + '\n' + question
 
+                  }
                 )
+                var mans = {
+                  text:strBuilder
+                }
+                bot.reply(mans)
             }
 
           catch (err) {

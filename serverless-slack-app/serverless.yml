@@ -1,16 +1,16 @@
-#      _____                          _               
-#     / ____|                        | |              
-#    | (___   ___ _ ____   _____ _ __| | ___  ___ ___ 
+#      _____                          _
+#     / ____|                        | |
+#    | (___   ___ _ ____   _____ _ __| | ___  ___ ___
 #     \___ \ / _ \ '__\ \ / / _ \ '__| |/ _ \/ __/ __|
 #     ____) |  __/ |   \ V /  __/ |  | |  __/\__ \__ \
 #    |_____/ \___|_|    \_/ \___|_|  |_|\___||___/___/
-#      _____ _               
-#     / ____| |          | |                          
-#    | (___ | | __ _  ___| | __                       
-#     \___ \| |/ _` |/ __| |/ /                       
-#     ____) | | (_| | (__|   <                        
-#    |_____/|_|\__,_|\___|_|\_\                       
-#                               
+#      _____ _
+#     / ____| |          | |
+#    | (___ | | __ _  ___| | __
+#     \___ \| |/ _` |/ __| |/ /
+#     ____) | | (_| | (__|   <
+#    |_____/|_|\__,_|\___|_|\_\
+#
 #
 #
 # This file is the main config file for your bot.
@@ -41,17 +41,17 @@ custom:
   slack_install_redirect: https://slack.com
 
   # Verification token
-  slack_verification_token: "uskjwyTHDXWslqPondk1bklu"            
-  
+  slack_verification_token: "uskjwyTHDXWslqPondk1bklu"
+
   # Space delimited scopes
-  slack_client_scopes: "bot commands incoming-webhook"
-  
+  slack_client_scopes: "bot commands incoming-webhook users:read users:read.email"
+
   # Client ID - quotes required
   slack_client_id: "133076293744.148415095699"
-  
+
   # Client Secret - quotes required
   slack_client_secret: "fbe29a467874b3f0fd568a0494db2390"
-  
+
 
 provider:
   name: aws
@@ -89,8 +89,8 @@ functions:
           integration: lambda
           response:
             template: $input.path('$')
-      
-      ## OAuth Routes      
+
+      ## OAuth Routes
       - http:
           path: ${self:custom.slack_install_path}
           method: get
@@ -108,7 +108,7 @@ functions:
                 pattern: http.*
                 headers:
                   Location: integration.response.body.errorMessage
-                  Cache-Control: "'no-cache, no-store, must-revalidate'"      
+                  Cache-Control: "'no-cache, no-store, must-revalidate'"
 
 
 resources:

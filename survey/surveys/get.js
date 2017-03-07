@@ -17,7 +17,7 @@ module.exports.get = (event, context, callback) => {
     // handle potential errors
     if (error) {
       console.error(error);
-      callback(new Error('Couldn\'t fetch the todo item.'));
+      callback(new Error('Couldn\'t fetch the survey item.'));
       return;
     }
 
